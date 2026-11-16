@@ -49,24 +49,37 @@ public class CustomUserDetailsService
         List<SimpleGrantedAuthority> authorities =
                 new ArrayList<>();
 
-        // --------------------------------------------------
-        // 1. Add user's normal/base role
-        // --------------------------------------------------
-
         authorities.add(
                 new SimpleGrantedAuthority(
                         "ROLE_" + user.getRole().name()
                 )
         );
 
-        // --------------------------------------------------
-        // 2. Load permissions for user's normal role
-        // --------------------------------------------------
+        addPermissions(authorities, user.getRole());
+
+        boolean activeAssignment =
+                assignmentRepository.findByUserIdAndStatus(
+                        user.getId(),
+                        AssignmentStatus.ACTIVE
+                ).isPresent();
+
+        if (activeAssignment) {
+            addPermissions(authorities, Role.ELECTION_OFFICER);
+        }
+
+        return new org.springframework.security.core.userdetails.User(
+                user.getEmail(),
+                user.getPassword(),
+                authorities
+        );
+    }
+
+    private void addPermissions(
+            List<SimpleGrantedAuthority> authorities,
+            Role role) {
 
         List<RolePermission> rolePermissions =
-                rolePermissionRepository.findByRole(
-                        user.getRole()
-                );
+                rolePermissionRepository.findByRole(role);
 
         for (RolePermission rolePermission : rolePermissions) {
 
@@ -78,80 +91,5 @@ public class CustomUserDetailsService
                     )
             );
         }
-
-        // --------------------------------------------------
-        // 3. Check ACTIVE Election Officer assignment
-        // --------------------------------------------------
-
-        boolean activeAssignment =
-                assignmentRepository.findByUserIdAndStatus(
-                        user.getId(),
-                        AssignmentStatus.ACTIVE
-                ).isPresent();
-
-        // --------------------------------------------------
-        // DEBUG
-        // --------------------------------------------------
-
-        System.out.println("=================================");
-        System.out.println("EO DEBUG");
-        System.out.println("User ID = " + user.getId());
-        System.out.println("User Email = " + user.getEmail());
-        System.out.println("User Role = " + user.getRole());
-        System.out.println(
-                "Active EO Assignment = " + activeAssignment
-        );
-        System.out.println("=================================");
-
-        // --------------------------------------------------
-        // 4. Add Election Officer permissions
-        // --------------------------------------------------
-
-        if (activeAssignment) {
-
-            List<RolePermission> eoPermissions =
-                    rolePermissionRepository.findByRole(
-                            Role.ELECTION_OFFICER
-                    );
-
-            for (RolePermission rolePermission : eoPermissions) {
-
-                String permissionName =
-                        rolePermission
-                                .getPermission()
-                                .getName();
-
-                authorities.add(
-                        new SimpleGrantedAuthority(
-                                permissionName
-                        )
-                );
-
-                System.out.println(
-                        "Added EO permission = "
-                                + permissionName
-                );
-            }
-        }
-
-        // --------------------------------------------------
-        // 5. Print final authorities
-        // --------------------------------------------------
-
-        System.out.println(
-                "FINAL AUTHORITIES = " + authorities
-        );
-
-        System.out.println("=================================");
-
-        // --------------------------------------------------
-        // 6. Create Spring Security UserDetails
-        // --------------------------------------------------
-
-        return new org.springframework.security.core.userdetails.User(
-                user.getEmail(),
-                user.getPassword(),
-                authorities
-        );
     }
 }

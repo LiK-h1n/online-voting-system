@@ -23,5 +23,5 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 .vscode/
-src/main/resources/application.properties
+secrets.properties
 database/online_voting_system_seed.sql

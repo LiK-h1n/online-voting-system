@@ -7,6 +7,9 @@ import com.voting.online_voting_system.enums.Role;
 import com.voting.online_voting_system.repository.PermissionRepository;
 import com.voting.online_voting_system.repository.RolePermissionRepository;
 import com.voting.online_voting_system.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,6 +19,15 @@ import java.time.LocalDateTime;
 
 @Configuration
 public class DataInitializer {
+
+    private static final Logger log =
+            LoggerFactory.getLogger(DataInitializer.class);
+
+    @Value("${app.admin.email}")
+    private String adminEmail;
+
+    @Value("${app.admin.password}")
+    private String adminPassword;
 
     @Bean
     CommandLineRunner initializeData(
@@ -214,10 +226,6 @@ public class DataInitializer {
             );
 
 
-            // =========================
-            // CREATE DEFAULT ADMIN
-            // =========================
-
             boolean adminExists =
                     userRepository.findAll()
                             .stream()
@@ -225,31 +233,33 @@ public class DataInitializer {
                                     user.getRole() == Role.ADMIN
                             );
 
-            if (!adminExists) {
-
-                User admin = new User();
-
-                admin.setStudentId("ADMIN001");
-                admin.setFirstName("System");
-                admin.setLastName("Admin");
-                admin.setEmail("admin@voting.com");
-
-                admin.setPassword(
-                        passwordEncoder.encode("admin123")
-                );
-
-                admin.setDepartment("Administration");
-                admin.setCourse("Administration");
-                admin.setYear(1);
-                admin.setCreatedAt(LocalDateTime.now());
-                admin.setRole(Role.ADMIN);
-
-                userRepository.save(admin);
-
-                System.out.println(
-                        "Default ADMIN created successfully."
-                );
+            if (adminExists) {
+                return;
             }
+
+            if (adminPassword == null || adminPassword.isBlank()) {
+                log.warn(
+                        "No admin account exists and ADMIN_PASSWORD is not set, "
+                                + "so no admin was created"
+                );
+                return;
+            }
+
+            User admin = new User();
+            admin.setStudentId("ADMIN001");
+            admin.setFirstName("System");
+            admin.setLastName("Admin");
+            admin.setEmail(adminEmail);
+            admin.setPassword(passwordEncoder.encode(adminPassword));
+            admin.setDepartment("Administration");
+            admin.setCourse("Administration");
+            admin.setYear(1);
+            admin.setCreatedAt(LocalDateTime.now());
+            admin.setRole(Role.ADMIN);
+
+            userRepository.save(admin);
+
+            log.info("Created admin account {}", adminEmail);
         };
     }
 

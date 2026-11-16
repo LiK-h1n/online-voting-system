@@ -1,21 +1,23 @@
 package com.voting.online_voting_system.service;
 
 import com.voting.online_voting_system.entity.Election;
-import com.voting.online_voting_system.entity.ElectionOfficerAssignment;
 import com.voting.online_voting_system.enums.AssignmentStatus;
 import com.voting.online_voting_system.enums.ElectionStatus;
 import com.voting.online_voting_system.repository.ElectionOfficerAssignmentRepository;
 import com.voting.online_voting_system.repository.ElectionRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.List;
 
 @Service
 public class ElectionStatusScheduler {
+
+    private static final Logger log =
+            LoggerFactory.getLogger(ElectionStatusScheduler.class);
 
     private final ElectionRepository electionRepository;
     private final ElectionOfficerAssignmentRepository assignmentRepository;
@@ -34,132 +36,53 @@ public class ElectionStatusScheduler {
 
         LocalDateTime now = LocalDateTime.now();
 
-        System.out.println("----------------------------------------");
-        System.out.println("SCHEDULER RUNNING");
-        System.out.println("JAVA TIMEZONE: " + ZoneId.systemDefault());
-        System.out.println("JAVA TIME: " + now);
-        System.out.println("----------------------------------------");
-
-        // --------------------------------------------------
-        // 1. Check UPCOMING elections
-        // --------------------------------------------------
-
-        List<Election> upcomingElections =
-                electionRepository.findByStatus(
-                        ElectionStatus.UPCOMING
-                );
-
-        System.out.println(
-                "UPCOMING ELECTIONS FOUND: "
-                        + upcomingElections.size()
-        );
-
-        for (Election election : upcomingElections) {
-
-            System.out.println("----------------------------------------");
-            System.out.println(
-                    "Election ID: " + election.getId()
-            );
-            System.out.println(
-                    "Election title: " + election.getTitle()
-            );
-            System.out.println(
-                    "Start date: " + election.getStartDate()
-            );
-            System.out.println(
-                    "End date: " + election.getEndDate()
-            );
-            System.out.println(
-                    "Current time: " + now
-            );
+        for (Election election :
+                electionRepository.findByStatus(ElectionStatus.UPCOMING)) {
 
             if (!now.isBefore(election.getStartDate())) {
 
                 election.setStatus(ElectionStatus.ONGOING);
-
                 electionRepository.save(election);
 
-                System.out.println(
-                        ">>> Election changed UPCOMING -> ONGOING"
-                );
-
-            } else {
-
-                System.out.println(
-                        ">>> Election has not started yet"
+                log.info(
+                        "Election {} ({}) is now ONGOING",
+                        election.getId(),
+                        election.getTitle()
                 );
             }
         }
 
-        // --------------------------------------------------
-        // 2. Check ONGOING elections
-        // --------------------------------------------------
-
-        List<Election> ongoingElections =
-                electionRepository.findByStatus(
-                        ElectionStatus.ONGOING
-                );
-
-        System.out.println(
-                "ONGOING ELECTIONS FOUND: "
-                        + ongoingElections.size()
-        );
-
-        for (Election election : ongoingElections) {
-
-            System.out.println("----------------------------------------");
-            System.out.println(
-                    "Checking ONGOING election ID: "
-                            + election.getId()
-            );
-            System.out.println(
-                    "End date: " + election.getEndDate()
-            );
-            System.out.println(
-                    "Current time: " + now
-            );
+        for (Election election :
+                electionRepository.findByStatus(ElectionStatus.ONGOING)) {
 
             if (!now.isBefore(election.getEndDate())) {
 
                 election.setStatus(ElectionStatus.COMPLETED);
-
                 electionRepository.save(election);
 
-                System.out.println(
-                        ">>> Election changed ONGOING -> COMPLETED"
+                log.info(
+                        "Election {} ({}) is now COMPLETED",
+                        election.getId(),
+                        election.getTitle()
                 );
 
-                // --------------------------------------------------
-                // 3. End EO assignment
-                // --------------------------------------------------
+                assignmentRepository
+                        .findByElectionIdAndStatus(
+                                election.getId(),
+                                AssignmentStatus.ACTIVE
+                        )
+                        .ifPresent(assignment -> {
 
-                ElectionOfficerAssignment assignment =
-                        assignmentRepository
-                                .findByElectionIdAndStatus(
-                                        election.getId(),
-                                        AssignmentStatus.ACTIVE
-                                )
-                                .orElse(null);
+                            assignment.setStatus(AssignmentStatus.ENDED);
+                            assignmentRepository.save(assignment);
 
-                if (assignment != null) {
-
-                    assignment.setStatus(
-                            AssignmentStatus.ENDED
-                    );
-
-                    assignmentRepository.save(assignment);
-
-                    System.out.println(
-                            ">>> EO assignment ID "
-                                    + assignment.getId()
-                                    + " changed to ENDED"
-                    );
-                }
+                            log.info(
+                                    "EO assignment {} ended with election {}",
+                                    assignment.getId(),
+                                    election.getId()
+                            );
+                        });
             }
         }
-
-        System.out.println("----------------------------------------");
-        System.out.println("SCHEDULER FINISHED");
-        System.out.println("----------------------------------------");
     }
 }

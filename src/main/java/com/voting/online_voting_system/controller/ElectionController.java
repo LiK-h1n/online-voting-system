@@ -31,25 +31,6 @@ public class ElectionController {
             @Valid @RequestBody CreateElectionRequest request,
             Authentication authentication) {
 
-        // DEBUG: Check who is authenticated for this request
-        System.out.println(
-                "========== CREATE ELECTION REQUEST =========="
-        );
-
-        System.out.println(
-                "Authenticated user = "
-                        + authentication.getName()
-        );
-
-        System.out.println(
-                "Authorities = "
-                        + authentication.getAuthorities()
-        );
-
-        System.out.println(
-                "============================================="
-        );
-
         try {
 
             String email = authentication.getName();

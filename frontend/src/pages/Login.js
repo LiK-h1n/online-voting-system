@@ -45,8 +45,6 @@ function Login() {
 
       const responseText = await response.text();
 
-      console.log("Login status:", response.status);
-      console.log("Login response:", responseText);
 
       let data = null;
 
@@ -79,8 +77,6 @@ function Login() {
       saveToken(data.token);
       saveUser(data);
 
-      console.log("Login successful");
-      console.log("Logged-in role:", data.role);
 
 
       // =========================
