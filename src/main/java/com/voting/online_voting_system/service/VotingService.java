@@ -296,7 +296,6 @@ public class VotingService {
 
         ballot.setElection(election);
         ballot.setEncryptedVote(encryptedVote);
-        ballot.setCastAt(LocalDateTime.now());
 
         ballotRepository.save(ballot);
 

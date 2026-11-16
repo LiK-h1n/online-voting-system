@@ -4,8 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "ballots")
@@ -15,8 +14,8 @@ import java.time.LocalDateTime;
 public class Ballot {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "election_id", nullable = false)
@@ -25,9 +24,6 @@ public class Ballot {
     @Lob
     @Column(nullable = false)
     private String encryptedVote;
-
-    @Column(nullable = false)
-    private LocalDateTime castAt;
 
     @PreUpdate
     public void preventUpdate() {
