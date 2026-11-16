@@ -1,0 +1,7 @@
+frontend
+database
+target
+.git
+.idea
+.vscode
+secrets.properties
