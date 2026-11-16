@@ -30,7 +30,7 @@ function Notifications() {
       }
 
       const response = await fetch(
-        `${API_BASE_URL}/api/notifications/user/${user.id}`,
+        `${API_BASE_URL}/api/notifications/my`,
         {
           method: "GET",
           headers: {

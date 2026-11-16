@@ -103,7 +103,7 @@ public class SecurityConfig {
                         .hasAuthority("VIEW_USERS")
 
                         .requestMatchers(
-                                "/api/admin/audit-log"
+                                "/api/audit-logs/**"
                         ).hasAuthority("VIEW_AUDIT_LOG")
 
                         .requestMatchers(
