@@ -10,6 +10,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/votes")
 public class VotingController {
@@ -29,16 +31,13 @@ public class VotingController {
 
         try {
 
-            String otp =
+            String message =
                     votingService.requestOtp(
                             request.getElectionId()
                     );
 
             return ResponseEntity.ok(
-                    new OtpResponse(
-                            "OTP generated successfully",
-                            otp
-                    )
+                    Map.of("message", message)
             );
 
         } catch (RuntimeException e) {
@@ -86,29 +85,6 @@ public class VotingController {
 
             return ResponseEntity.badRequest()
                     .body(e.getMessage());
-        }
-    }
-
-    // Temporary response class for development testing
-    public static class OtpResponse {
-
-        private String message;
-        private String otp;
-
-        public OtpResponse(
-                String message,
-                String otp
-        ) {
-            this.message = message;
-            this.otp = otp;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-
-        public String getOtp() {
-            return otp;
         }
     }
 }

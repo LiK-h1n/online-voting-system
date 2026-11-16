@@ -120,9 +120,6 @@ public class VotingService {
             );
         }
 
-        // TEMPORARY DEVELOPMENT MODE
-        // OTP is generated and stored,
-        // but NOT sent through email.
         return otpService.generateAndSendOtp(
                 user,
                 election
